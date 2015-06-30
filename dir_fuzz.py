@@ -21,6 +21,7 @@ class Dir_fuzz(threading.Thread):
 
 			global times_403
 			global times_302
+			global times_200
 			global times_cant_connect
 
 			testing_path = q.get()
@@ -42,25 +43,35 @@ class Dir_fuzz(threading.Thread):
 
 			if r.status_code == 200:
 				print colored("[+]200:"+testing_url,'green')
+				rcode200_url.append(testing_url)
+				times_200 = times_200+1
 
 			if r.status_code == 403:
 				print colored("[-]403:"+testing_url,'yellow')
+				rcode403_url.append(testing_url)
 				times_403 = times_403+1
+
 			if r.status_code == 302:
 				print colored("[-]302:"+testing_url,'yellow')
+				rcode302_url.append(testing_url)
 				times_302 = times_302+1
 
-			if (times_302>30)or(times_403>30)or(times_cant_connect>25):
-				print colored("[!]Stop_Fuzz",'red')
+			if (times_302>35)or(times_403>35)or(times_cant_connect>35)or(times_200>45):
+				print colored("[!]Stop_Fuzz!",'red')
 				break
 
 if __name__ == '__main__':
 
     times_403 = 0
     times_302 = 0
+    times_200 = 0
     times_cant_connect = 0
 
-    url = 'http://www.wooyun.org'
+    rcode200_url = []
+    rcode302_url = []
+    rcode403_url = []
+
+    url = 'http://www.gongzhengcar.net/'
 
     fd = open(os.getcwd()+'/dic/dir.txt','r')
     dir_fuzz_list = fd.readlines()
@@ -71,7 +82,7 @@ if __name__ == '__main__':
         i = i.strip('\r\n')
         q.put(i)
 
-    Thread_number = 10
+    Thread_number = 15
     Threads = []
     for i in xrange(0,Thread_number):
         t = Dir_fuzz(url)
@@ -82,6 +93,14 @@ if __name__ == '__main__':
 
     for i in Threads:
         i.join()
+
+    for i in rcode200_url:
+        print colored("[+]response code 200||"+i,'green')
+    for i in rcode302_url:
+        print colored("[+]response code 302||"+i,'yellow')
+    for i in rcode403_url:
+        print colored("[+]response code 403||"+i,'yellow')
+
     print "[^]Job Done!"
 
 
